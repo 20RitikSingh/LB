@@ -1,0 +1,4 @@
+servers:
+  - http://server1.example.com
+  - http://server2.example.com
+  - http://server3.example.com
