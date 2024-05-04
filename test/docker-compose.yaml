@@ -1,0 +1,112 @@
+version: '3.8'
+
+services:
+  # Container 1
+  container1:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8081:8080" # Map container's port 8080 to host port 8081
+    environment:
+      - CPU_LIMIT=0.5
+      - MEMORY_LIMIT=128m
+
+  # Container 2
+  container2:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8082:8080" # Map container's port 8080 to host port 8082
+    environment:
+      - CPU_LIMIT=0.5
+      - MEMORY_LIMIT=128m
+
+  # Container 3
+  container3:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8083:8080" # Map container's port 8080 to host port 8083
+    environment:
+      - CPU_LIMIT=0.5
+      - MEMORY_LIMIT=128m
+
+  # Container 4
+  container4:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8084:8080" # Map container's port 8080 to host port 8084
+    environment:
+      - CPU_LIMIT=1
+      - MEMORY_LIMIT=256m
+
+  # Container 5
+  container5:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8085:8080" # Map container's port 8080 to host port 8085
+    environment:
+      - CPU_LIMIT=1
+      - MEMORY_LIMIT=256m
+
+  # Container 6
+  container6:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8086:8080" # Map container's port 8080 to host port 8086
+    environment:
+      - CPU_LIMIT=1
+      - MEMORY_LIMIT=256m
+
+  # Container 7
+  container7:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8087:8080" # Map container's port 8080 to host port 8087
+    environment:
+      - CPU_LIMIT=2
+      - MEMORY_LIMIT=512m
+
+  # Container 8
+  container8:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8088:8080" # Map container's port 8080 to host port 8088
+    environment:
+      - CPU_LIMIT=2
+      - MEMORY_LIMIT=512m
+
+  # Container 9
+  container9:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8089:8080" # Map container's port 8080 to host port 8089
+    environment:
+      - CPU_LIMIT=2
+      - MEMORY_LIMIT=512m
+
+  # Container 10
+  container10:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8090:8080" # Map container's port 8080 to host port 8090
+    environment:
+      - CPU_LIMIT=2
+      - MEMORY_LIMIT=512m

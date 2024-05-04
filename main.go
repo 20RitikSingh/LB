@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	webui "github.com/20ritiksingh/LoadBalancer/WebUI"
 	"github.com/20ritiksingh/LoadBalancer/servers"
 	"github.com/20ritiksingh/LoadBalancer/test"
 	"github.com/fsnotify/fsnotify"
@@ -25,6 +26,7 @@ var (
 
 func run() {
 	go test.Test()
+	go webui.Webui()
 
 	// Initialize Redis client
 	redisClient = servers.Init()
