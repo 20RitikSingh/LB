@@ -1,7 +1,0 @@
-servers:
-- name: server1
-  url: http://example.com/server1
-  weight: 1
-- name: server2
-  url: http://example.com/server2
-  weight: 2

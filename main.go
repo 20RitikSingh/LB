@@ -4,21 +4,28 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
 	"sync"
+	"time"
 
 	"github.com/20ritiksingh/LoadBalancer/servers"
+	"github.com/20ritiksingh/LoadBalancer/test"
+	"github.com/fsnotify/fsnotify"
 
 	"github.com/go-redis/redis/v8"
 )
 
 var (
 	redisClient *redis.Client
+	rr          int
 )
 
-func main() {
+func run() {
+	go test.Test()
+
 	// Initialize Redis client
 	redisClient = servers.Init()
 
@@ -52,12 +59,54 @@ func main() {
 		Addr:    ":8080",
 		Handler: proxy,
 	}
+	// server.Close()
 
 	fmt.Println("Reverse proxy server listening on port 8080")
 	err = server.ListenAndServe()
 	if err != nil {
 		fmt.Println("Error:", err)
 	}
+}
+func main() {
+	// Start watching the YAML file
+	filename := "./servers/servers.yaml"
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		log.Fatal("Error creating watcher:", err)
+	}
+	defer watcher.Close()
+
+	err = watcher.Add(filename)
+	if err != nil {
+		log.Fatal("Error adding file to watcher:", err)
+	}
+
+	// Initial run of the main function
+	run()
+
+	// Watch for changes in the YAML file
+	go func() {
+		for {
+			select {
+			case event, ok := <-watcher.Events:
+				if !ok {
+					return
+				}
+				if event.Op&fsnotify.Write == fsnotify.Write {
+					log.Println("File modified:", event.Name)
+					run()
+				}
+			case err, ok := <-watcher.Errors:
+				if !ok {
+					return
+				}
+				log.Println("Error:", err)
+			}
+		}
+	}()
+
+	// Wait for signals to exit
+	select {}
 }
 
 func parseURL(rawurl string) *url.URL {
@@ -76,7 +125,7 @@ type SessionManager struct {
 // NewStickyReverseProxy creates a new reverse proxy with sticky sessions
 func NewStickyReverseProxy(targets []*url.URL) *httputil.ReverseProxy {
 	sm := &SessionManager{}
-
+	var target *url.URL
 	director := func(req *http.Request) {
 
 		sessionID := req.Header.Get("Session-ID")
@@ -92,12 +141,42 @@ func NewStickyReverseProxy(targets []*url.URL) *httputil.ReverseProxy {
 		sm.Lock()
 		defer sm.Unlock()
 		// Default behavior (non-sticky)
-		target := targets[0]
+		target = targets[rr]
+		rr = (rr + 1) % len(targets)
 		req.URL.Scheme = target.Scheme
 		req.URL.Host = target.Host
+		log.Printf("request sent to %s", req.URL)
 	}
 
 	return &httputil.ReverseProxy{
 		Director: director,
+		Transport: &http.Transport{
+			// Add retry logic to the transport
+			MaxIdleConnsPerHost:   0,
+			ResponseHeaderTimeout: 10 * time.Second,
+			DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
+				var d net.Dialer
+				var conn net.Conn
+				var err error
+				for i := 0; i < 3; i++ {
+					conn, err = d.DialContext(ctx, network, addr)
+					if err == nil {
+						return conn, nil
+					}
+					fmt.Printf("Failed to connect to %s (attempt %d): %v\n", addr, i+1, err)
+					// Wait between retries
+				}
+				for _, host := range targets {
+					conn, err = d.DialContext(ctx, network, "localhost:8009")
+					if err == nil {
+						return conn, nil
+					}
+					fmt.Printf("Failed to connect to %s : %v\n", host, err)
+					// Wait between retries
+				}
+				fmt.Printf("All connection attempts failed\n")
+				return nil, err
+			},
+		},
 	}
 }

@@ -1,4 +1,6 @@
 servers:
-  - http://server1.example.com
-  - http://server2.example.com
-  - http://server3.example.com
+  - http://localhost:8001
+  - http://localhost:8002
+  - http://localhost:8003
+  - http://localhost:8004
+  - http://localhost:8005

@@ -28,8 +28,12 @@ func Init() *redis.Client {
 		DB:       0,                // Use the default DB
 	})
 
+	err := redisClient.FlushAll(context.Background()).Err()
+	if err != nil {
+		log.Fatalf("Failed to flush Redis: %v", err)
+	}
 	// Load data from YAML file
-	data, err := loadDataFromYAML("servers.yaml")
+	data, err := loadDataFromYAML("./servers/servers.yaml")
 	if err != nil {
 		log.Fatal("Error loading data from YAML file:", err)
 	}
@@ -48,7 +52,7 @@ func loadDataFromYAML(filename string) (*Data, error) {
 		return nil, err
 	}
 
-	err = yaml.Unmarshal(file, data.Servers)
+	err = yaml.Unmarshal(file, data)
 	if err != nil {
 		return nil, err
 	}
