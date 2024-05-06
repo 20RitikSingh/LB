@@ -4,7 +4,7 @@ FROM golang:latest
 WORKDIR /app
 
 # Clone your repository from GitHub
-RUN git clone https://github.com/20RitikSingh/Ecommerce-Flower-Shop .
+RUN git clone https://github.com/20RitikSingh/Ecommerce-Flower-Shop.git .
 
 # Build your Go application
 RUN go build -o server server.go

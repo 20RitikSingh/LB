@@ -60,6 +60,27 @@ func loadDataFromYAML(filename string) (*Data, error) {
 
 	return data, nil
 }
+func AddtoYAML(filename string, server string) error {
+	data := &Data{}
+	file, err := os.ReadFile(filename)
+	if err != nil {
+		return err
+	}
+	err = yaml.Unmarshal(file, data)
+	if err != nil {
+		return err
+	}
+	data.Servers = append(data.Servers, server)
+	out, err := yaml.Marshal(data)
+	if err != nil {
+		return err
+	}
+	err = os.WriteFile(filename, out, 0644)
+	if err != nil {
+		return err
+	}
+	return nil
+}
 
 // populateRedis populates the Redis cache with data from the YAML file
 func populateRedis(data *Data) {

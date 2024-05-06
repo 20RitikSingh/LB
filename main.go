@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"strings"
 	"sync"
 	"time"
 
@@ -27,6 +28,7 @@ var (
 func run() {
 	go test.Test()
 	go webui.Webui()
+	test.StartAutoScaling(2)
 
 	// Initialize Redis client
 	redisClient = servers.Init()
@@ -129,10 +131,17 @@ func NewStickyReverseProxy(targets []*url.URL) *httputil.ReverseProxy {
 	sm := &SessionManager{}
 	var target *url.URL
 	director := func(req *http.Request) {
+		ip := req.RemoteAddr
+		forwardedFor := req.Header.Get("X-Forwarded-For")
+		if forwardedFor != "" {
+			// The X-Forwarded-For header may contain a comma-separated list
+			// of IP addresses, with the client's IP address being the first one
+			ips := strings.Split(forwardedFor, ",")
+			ip = strings.TrimSpace(ips[0])
+		}
 
-		sessionID := req.Header.Get("Session-ID")
-		if sessionID != "" {
-			targetURL, err := redisClient.HGet(req.Context(), "sessions", sessionID).Result()
+		if ip != "" {
+			targetURL, err := redisClient.HGet(req.Context(), "sessions", ip).Result()
 			if err == nil && targetURL != "" {
 				parsedURL, _ := url.Parse(targetURL)
 				req.URL.Scheme = parsedURL.Scheme
@@ -140,6 +149,12 @@ func NewStickyReverseProxy(targets []*url.URL) *httputil.ReverseProxy {
 				return
 			}
 		}
+
+		err := redisClient.SetEX(context.Background(), "sessions", ip, 60*time.Second).Err()
+		if err != nil {
+			log.Fatalf("Failed to set key: %v", err)
+		}
+
 		sm.Lock()
 		defer sm.Unlock()
 		// Default behavior (non-sticky)
